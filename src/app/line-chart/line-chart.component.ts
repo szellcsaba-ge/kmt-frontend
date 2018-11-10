@@ -6,6 +6,7 @@ import * as d3Shape from 'd3-shape';
 import * as d3Array from 'd3-array';
 import * as d3Transition from 'd3-transition';
 import * as d3Ease from 'd3-ease';
+import * as d3axisleft from 'd3-axis'
 
 import { BehaviorSubject } from 'rxjs';
 import { ChartPoint } from '../models/chartPoint';
@@ -30,6 +31,8 @@ export class LineChartComponent implements OnInit {
 
   public width = 500;
   public height = 200;
+  public tomb : any[] = []
+
   @Input() public chartTimeWidth = 10;
 
   @ViewChild('svg') svgElement: ElementRef;
@@ -38,14 +41,18 @@ export class LineChartComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.svg = d3.select(this.svgElement.nativeElement).append('g');
+    this.svg = d3.select(this.svgElement.nativeElement).append('g');    
     this.x = d3Scale.scaleTime().range([0, this.width]);
-    this.y = d3Scale.scaleLinear().range([this.height, 0]);
+    this.y = d3Scale.scaleLinear().range([this.height - 50, 0]);    
     this.setDomains();
+   
+    this.svg.attr("transform", "translate(" + 50 + "," + 50 + ")");       
+
     this.line = d3Shape.line().x( (d: any) => this.x(d.date) ).y( (d: any) => this.y(d.value) );
     this.svg.append('path').datum(this.chartData).attr('class', 'line').attr('d', this.line);
 
     this.data.subscribe((chartPoint: ChartPoint) => {
+  
       this.lastBeforeData = this.lastData;
       this.lastData = new Date().getTime();
       this.redrawLine();
@@ -63,6 +70,9 @@ export class LineChartComponent implements OnInit {
 
   redrawLine() {
     this.setDomains();
+    this.svg.call(d3axisleft
+      .axisLeft(this.y))
+      .attr("color", "white");
     const tr = d3Transition.transition().ease(d3Ease.easeLinear).duration(this.lastData - this.lastBeforeData);
     this.svg.select('path').transition(tr).attr('d', this.line);
   }
