@@ -3,6 +3,8 @@ import { BehaviorSubject } from 'rxjs';
 import { bufferCount, delay, scan, takeLast, take } from 'rxjs/operators';
 import { ChartPoint } from './models/chartPoint';
 
+import * as socketio from 'socket.io-client';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -17,7 +19,25 @@ export class AppComponent {
   public chartData25: BehaviorSubject<ChartPoint>;
   public randomValue = 50;
 
+  public socket: any;
+
+  public data: any[] = [];
+  public cpuData: any[];
+  public cpuDataPerMinute: any[];
+
   constructor() {
+    this.socket = socketio('http://127.0.0.1:8012/');
+    this.socket.on('connect', () => {
+      console.log('connected');
+    });
+    this.socket.on('disconnect', () => {
+      console.log('disconnected');
+    });
+    this.socket.on('deliver', (data) => {
+      console.log(Object.values(data));
+      this.chartData.next({date: new Date(), value: data[0].cpu.value * 100 });
+    });
+
     this.chartData = new BehaviorSubject(new ChartPoint(50));
     this.chartData5 = new BehaviorSubject(new ChartPoint(50));
     this.chartData25 = new BehaviorSubject(new ChartPoint(50));
@@ -64,7 +84,7 @@ export class AppComponent {
     });
     */
 
-    setInterval(() => this.generateRandomData(), 200);
+    // setInterval(() => this.generateRandomData(), 200);
   }
 
   generateRandomData() {
